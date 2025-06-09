@@ -1,0 +1,30 @@
+# ──────────────────────────────────────────────
+# SHAI stack – Git ignore rules
+# This file keeps runtime artifacts and secrets
+# out of version control.
+# ──────────────────────────────────────────────
+
+# === Runtime data ===
+models/**
+openwebui/data/**
+logs/**
+
+# === Environment files ===
+.env
+compose/.env
+
+# === Docker artifacts ===
+**/.docker*
+
+# === Editor & OS trash ===
+*.swp
+*~
+.DS_Store
+Thumbs.db
+
+# === Python cache (if scripts grow) ===
+__pycache__/
+*.py[cod]
+
+# === Node modules (if UI extensions appear) ===
+node_modules/

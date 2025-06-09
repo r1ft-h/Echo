@@ -1,4 +1,4 @@
-# SHAI Lab — **Self‑Hosted AI Inference Stack**
+# SHAI — **Self‑Hosted AI Inference Stack**
 
 > **One repo → every target**: WSL 2 on Windows, bare‑metal Ubuntu Server, and future k8s rigs.
 >
@@ -10,12 +10,12 @@
 
 Running a local LLM is easy… until you need:
 
-* **Repeatable installs** across laptops, lab boxes *and* datacentre nodes.
+* **Repeatable installs** across laptops, workstations *and* datacentre nodes.
 * **Clean separation** between runtime (containers + scripts) and bootstrap (OS‑specific glue).
 * **Audit & safety**: every admin action is logged; nothing is done as *root* once the stack is live.
 * **Ready for tomorrow**: same tree works whether you scale to multi‑GPU or migrate to Kubernetes.
 
-SHAI Lab is that opinionated skeleton. Clone → run `setup.sh` → `make up` — you’re serving an OpenAI‑compatible endpoint in minutes.
+The SHAI stack is that opinionated skeleton. Clone → run `setup.sh` → `make up` — you’re serving an OpenAI‑compatible endpoint in minutes.
 
 ---
 
@@ -27,7 +27,7 @@ shai-lab/
 ├─ compose/           # docker‑compose stack  (ports via .env)
 ├─ deploy/            # one‑shot installers per target OS
 │   ├─ wsl/setup.sh   # WSL 2 (Ubuntu 22.04)
-│   └─ ubuntu/setup.sh# Bare‑metal Ubuntu Server 22.04
+│   └─ ubuntu_server/setup.sh# Bare‑metal Ubuntu Server 22.04
 ├─ docs/              # operator handbook, architecture notes
 ├─ inventory/         # (optional) Ansible / Terraform hosts files
 ├─ models/            # <empty> local HF weights (git‑ignored)
@@ -76,7 +76,7 @@ Open [http://localhost:8080](http://localhost:8080) → you’re chatting with y
 ssh user@server
 sudo apt update && sudo apt install git -y
 git clone https://github.com/your-org/shai-lab.git
-cd shai-lab/deploy/ubuntu
+cd shai-lab/deploy/ubuntu_server
 sudo ./setup.sh
 logout && login again     # docker group refresh
 cd ~/shai-lab && cp compose/.env.example compose/.env && make up

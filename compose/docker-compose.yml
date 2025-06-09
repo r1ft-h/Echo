@@ -1,0 +1,66 @@
+version: "3.8"
+
+###############################
+# SHAI stack – core services  #
+###############################
+# Ports, quantisation flags and model length are injected via compose/.env or /opt/shai/.env.
+
+services:
+  vllm-server:
+    image: vllm/vllm-openai:latest
+    container_name: vllm-server
+    restart: unless-stopped
+
+    # ─── GPU passthrough ───────────────────────────────────────────────────
+    runtime: nvidia
+    device_requests:
+      - driver: nvidia
+        count: 1
+        capabilities: [gpu]
+
+    # ─── Networking ────────────────────────────────────────────────────────
+    ports:
+      - "${VLLM_PORT:-8000}:8000"         # OpenAI‑compatible REST API
+
+    # ─── Environment ───────────────────────────────────────────────────────
+    environment:
+      - HF_HOME=/models                    # cache inside container mounts /models
+
+    # ─── Mount model folder (read‑only) ─────────────────────────────────────
+    volumes:
+      - ../vllm/current_model:/models:ro   # symlink points to chosen model variant
+
+    # ─── Startup command ───────────────────────────────────────────────────
+    command: >-
+      --model /models \
+      --quantization ${MODEL_QUANT:-awq} \
+      --max-model-len ${MODEL_MAXLEN:-8192} \
+      --trust-remote-code
+
+    networks: [shai]
+
+  openwebui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: openwebui
+    restart: unless-stopped
+    depends_on:
+      - vllm-server
+
+    ports:
+      - "${OPENWEBUI_PORT:-8080}:8080"    # Web GUI
+
+    environment:
+      - OPENAI_API_BASE_URL=http://vllm-server:8000/v1
+      - WEBUI_AUTH=${WEBUI_AUTH:-false}    # toggle auth in .env
+
+    volumes:
+      - ../openwebui/data:/app/backend/data
+
+    networks: [shai]
+
+###############################
+#  Networks                  #
+###############################
+networks:
+  shai:
+    driver: bridge
