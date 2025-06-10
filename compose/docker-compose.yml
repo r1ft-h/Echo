@@ -13,11 +13,6 @@ services:
 
     # ─── GPU passthrough ───────────────────────────────────────────────────
     runtime: nvidia
-    device_requests:
-      - driver: nvidia
-        count: 1
-        capabilities: [gpu]
-
     # ─── Networking ────────────────────────────────────────────────────────
     ports:
       - "${VLLM_PORT:-8000}:8000"         # OpenAI‑compatible REST API
