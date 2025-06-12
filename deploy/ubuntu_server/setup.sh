@@ -6,6 +6,7 @@
 # * Installs NVIDIA driver 550, Docker CE and the NVIDIA Container Toolkit
 # * Creates /opt/shai directory tree + logrotate
 # * Configures UFW (OpenSSH + OpenWebUI port)
+# * Syncs project files from /opt/shai-src
 # * English-only, non-interactive, idempotent
 # -----------------------------------------------------------------------------
 set -euo pipefail
@@ -13,6 +14,7 @@ export DEBIAN_FRONTEND=noninteractive
 
 # ───────────────────────── Variables ─────────────────────────────────────────
 SHAI_ROOT="/opt/shai"
+SHAI_SRC="/opt/shai-src"
 LOG_DIR="$SHAI_ROOT/logs"
 SETUP_LOG="$LOG_DIR/setup.log"
 OPENWEBUI_PORT="8080"
@@ -60,11 +62,9 @@ fi
 # ───────────── NVIDIA Container Toolkit (generic deb repo) ───────────────────
 if ! command -v nvidia-ctk &>/dev/null; then
   echo "=== Installing NVIDIA Container Toolkit ==="
-  # GPG key
   curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey \
     | gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
 
-  # Generic stable repository
   curl -sSL https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list \
     | sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#' \
     > /etc/apt/sources.list.d/nvidia-container-toolkit.list
@@ -99,6 +99,16 @@ $LOG_DIR/*.log {
     create 0640 root root
 }
 EOF
+
+# ───────────────────────── Sync SHAI project source ──────────────────────────
+echo "=== Syncing SHAI project files ==="
+if [[ -d "$SHAI_SRC" ]]; then
+  rsync -a --exclude='.git' "$SHAI_SRC"/ "$SHAI_ROOT"/
+  chown -R "$CALLING_USER:$CALLING_USER" "$SHAI_ROOT"
+  chmod +x "$SHAI_ROOT"/bin/*.sh || true
+else
+  echo "⚠️  $SHAI_SRC not found. Skipping rsync of project files." >&2
+fi
 
 # ────────────────────────────── Logging ───────────────────────────────────────
 mkdir -p "$LOG_DIR"
