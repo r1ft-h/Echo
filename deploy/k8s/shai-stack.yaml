@@ -1,0 +1,99 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: shai
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vllm-server
+  namespace: shai
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vllm-server
+  template:
+    metadata:
+      labels:
+        app: vllm-server
+    spec:
+      containers:
+        - name: vllm-server
+          image: vllm/vllm-openai:0.2.4
+          ports:
+            - containerPort: 8000
+          volumeMounts:
+            - name: model
+              mountPath: /models
+          args:
+            - "--model"
+            - "/models"
+            - "--max-model-len"
+            - "2048"
+            - "--served-model-name"
+            - "mistral7b-awq"
+            - "--host"
+            - "0.0.0.0"
+      volumes:
+        - name: model
+          hostPath:
+            path: /opt/shai/vllm/current_model
+            type: Directory
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: vllm-server
+  namespace: shai
+spec:
+  selector:
+    app: vllm-server
+  ports:
+    - port: 8000
+      targetPort: 8000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: openwebui
+  namespace: shai
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: openwebui
+  template:
+    metadata:
+      labels:
+        app: openwebui
+    spec:
+      containers:
+        - name: openwebui
+          image: ghcr.io/open-webui/open-webui:main
+          ports:
+            - containerPort: 8080
+          env:
+            - name: OPENAI_API_BASE_URL
+              value: http://vllm-server:8000/v1
+          volumeMounts:
+            - name: data
+              mountPath: /app/backend/data
+      volumes:
+        - name: data
+          hostPath:
+            path: /opt/shai/openwebui/data
+            type: Directory
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: openwebui
+  namespace: shai
+spec:
+  selector:
+    app: openwebui
+  ports:
+    - port: 8080
+      targetPort: 8080
+
