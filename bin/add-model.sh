@@ -3,11 +3,12 @@
 # add-model.sh – download a Hugging Face model into /opt/shai/models/<alias>
 # -----------------------------------------------------------------------------
 # Usage:
-#   add-model.sh <alias> <huggingface_repo_id> [--quant awq|gptq|none]
-# Example:
-#   add-model.sh mistral7b-awq mistralai/Mistral-7B-Instruct-v0.2-AWQ --quant awq
+#   add-model.sh <alias> <hf_repo_id> [--quant awq|gptq|none]
 # -----------------------------------------------------------------------------
 set -euo pipefail
+
+# API token explicitly set here
+HF_TOKEN="XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
 
 ALIAS="${1:-}"
 REPO="${2:-}"
@@ -16,51 +17,52 @@ QUANT_FLAG="${3:---quant none}"
 MODELS_DIR="/opt/shai/models"
 TARGET_DIR="$MODELS_DIR/$ALIAS"
 BIN_LOG="/opt/shai/logs/bin-actions.log"
-ENV_FILE="/opt/shai/.env"             # created by setup script
+ENV_FILE="/opt/shai/.env"
 
-# ─────────────────────── Functions ───────────────────────────────────────────
 usage() {
   cat <<EOF
-Usage: $0 <alias> <huggingface_repo_id> [--quant awq|gptq|none]
+Usage: $0 <alias> <hf_repo_id> [--quant awq|gptq|none]
 Example: $0 mistral7b-awq mistralai/Mistral-7B-Instruct-v0.2-AWQ --quant awq
 EOF
   exit 1
 }
 
-ts() { date -u +"%Y-%m-%dT%H:%M:%SZ"; }
+ts()   { date -u +"%Y-%m-%dT%H:%M:%SZ"; }
+log()  { echo "$(ts) [user:$USER] [action:add-model] $1" >> "$BIN_LOG"; }
 
-log_action() {
-  echo "$(ts) [user:$USER] [action:add-model] alias='$ALIAS' repo='$REPO' quant='${QUANT_FLAG#--quant }'" >> "$BIN_LOG"
-}
-
-# ─────────────────────── Validation ──────────────────────────────────────────
 [[ -z "$ALIAS" || -z "$REPO" ]] && usage
-[[ -d "$TARGET_DIR" ]] && { echo "❌ Alias '$ALIAS' already exists in $MODELS_DIR" >&2; exit 1; }
 
-# ─────────────────────── Download model ──────────────────────────────────────
+# Ensure required directories exist
+mkdir -p /opt/shai/{models,vllm,logs,bin,openwebui/data}
+[ -f "$ENV_FILE" ] || touch "$ENV_FILE"
+
+if [[ -d "$TARGET_DIR" ]]; then
+  echo "⚠️  Alias '$ALIAS' already exists. Cleaning up…"
+  rm -rf "$TARGET_DIR"
+fi
+
 mkdir -p "$TARGET_DIR"
-
 echo "⬇️  Downloading model '$REPO' as alias '$ALIAS'…"
+
 if command -v huggingface-cli &>/dev/null; then
-  huggingface-cli download "$REPO" --local-dir "$TARGET_DIR" --local-dir-use-symlinks False
+  huggingface-cli download "$REPO" --local-dir "$TARGET_DIR" --local-dir-use-symlinks False --token "$HF_TOKEN"
 else
-  echo "huggingface-cli not found – falling back to git clone" >&2
-  git clone --depth 1 "https://huggingface.co/$REPO.git" "$TARGET_DIR"
+  GIT_ASKPASS="/bin/echo" git clone --depth 1 \
+    "https://oauth2:${HF_TOKEN}@huggingface.co/${REPO}.git" "$TARGET_DIR"
 fi
 
-echo "✅ Model downloaded to $TARGET_DIR"
+echo "✅ Model saved to $TARGET_DIR"
 
-# ─────────────────────── Update .env quant flag ─────────────────────────────-
+# Update MODEL_QUANT in .env if requested
 if [[ "$QUANT_FLAG" != "--quant none" ]]; then
-  QUANT_VALUE="${QUANT_FLAG#--quant }"
-  if [[ -f "$ENV_FILE" ]]; then
-    sed -i "s/^MODEL_QUANT=.*/MODEL_QUANT=$QUANT_VALUE/" "$ENV_FILE"
+  VALUE="${QUANT_FLAG#--quant }"
+  if grep -q '^MODEL_QUANT=' "$ENV_FILE" 2>/dev/null; then
+    sed -i "s/^MODEL_QUANT=.*/MODEL_QUANT=$VALUE/" "$ENV_FILE"
   else
-    echo "MODEL_QUANT=$QUANT_VALUE" >> "$ENV_FILE"
+    echo "MODEL_QUANT=$VALUE" >> "$ENV_FILE"
   fi
-  echo "ℹ️  MODEL_QUANT updated to '$QUANT_VALUE' in $ENV_FILE."
+  echo "ℹ️  MODEL_QUANT set to '$VALUE' in .env"
 fi
 
-log_action
-
-echo "Done. You can now activate the model with: switch-model.sh $ALIAS"
+log "alias='$ALIAS' repo='$REPO' quant='${QUANT_FLAG#--quant }'"
+echo "Done. Activate with: switch-model.sh $ALIAS"

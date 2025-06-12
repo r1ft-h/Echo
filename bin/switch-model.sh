@@ -21,7 +21,6 @@ usage() {
 }
 
 ts() { date -u +"%Y-%m-%dT%H:%M:%SZ"; }
-
 log_action() {
   echo "$(ts) [user:$USER] [action:switch-model] model='$ALIAS'" >> "$BIN_LOG"
 }
@@ -29,12 +28,14 @@ log_action() {
 [[ -z "$ALIAS" ]] && usage
 [[ ! -d "$TARGET_DIR" ]] && { echo "❌ Model alias '$ALIAS' does not exist." >&2; exit 1; }
 
+# Ensure required directories exist
+mkdir -p /opt/shai/vllm /opt/shai/logs
+
 # Remove old symlink and create new one
 rm -f "$SYMLINK"
 ln -s "$TARGET_DIR" "$SYMLINK"
 
 echo "🔁 Model switched to '$ALIAS'. Restarting vLLM container…"
-
 docker compose --project-directory $(dirname $(realpath "$0"))/../compose restart vllm-server
 
 log_action
