@@ -151,4 +151,16 @@ http://<server‑ip>:8080
 
 ---
 
-### © 2025 SH.AI — All rights reserved
+## 6 Troubleshooting
+
+| Symptom                                                                                | Probable Cause                                                                | Resolution                                                                                                                                                                                                                                                                                  |
+| -------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`curl: (56) Recv failure: Connection reset by peer`** when querying `localhost:8000` | The vLLM API did not bind to port 8000 or crashed after model load.           | • Run `docker compose -f /opt/shai/compose/docker-compose.yml logs -f vllm-server`.<br>• Ensure `--served-model-name` and `--max-model-len` are present in the compose file.<br>• Verify that the GPU has sufficient memory.<br>• If running under WSL 2, use the tested image tag `0.2.4`. |
+| **`ValueError: max seq len … larger than the maximum number of tokens…`**              | The selected model’s context window exceeds the KV‑cache capacity of the GPU. | Reduce `--max-model-len` (e.g. 2048 → 1024) or increase `gpu_memory_utilization` in the compose file.                                                                                                                                                                                       |
+| **`nvidia-smi` works on host but fails inside container**                              | NVIDIA Container Toolkit is not registered with Docker.                       | `sudo nvidia-ctk runtime configure --runtime=docker && sudo systemctl restart docker`                                                                                                                                                                                                       |
+| **`permission denied` on `/opt/shai/models`** after manual file deletion               | Folder ownership reverted to `root`.                                          | `sudo chown -R $USER:$USER /opt/shai/models`                                                                                                                                                                                                                                                |
+| OpenWebUI not reachable on port 8080                                                   | UFW/firewall rule missing or incorrect.                                       | `sudo ufw allow 8080/tcp` and confirm status with `sudo ufw status numbered`.                                                                                                                                                                                                               |
+
+---
+
+### © 2025 SH.AI — All rights reserved SH.AI — All rights reserved
