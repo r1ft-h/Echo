@@ -1,0 +1,103 @@
+#!/usr/bin/env bash
+# -----------------------------------------------------------------------------
+# status – SHAI stack health dashboard
+# -----------------------------------------------------------------------------
+#  status                    → one-shot dashboard
+#  status --watch [-i N]     → full-screen auto-refresh every N s (default 5)
+#  status --json             → single-line JSON (for scripts / alerts)
+#
+#  Live keys in --watch:
+#    r  restart vLLM + OpenWebUI          s  stop both containers
+#    p  start both containers             q  quit watch loop
+# -----------------------------------------------------------------------------
+set -u   # keep “undefined-var” guard, drop -e/-o pipefail to avoid early exit
+
+# ─────────────────────────  Colours / helpers  ──────────────────────────────
+CLR="$(tput clear 2>/dev/null || printf '\033c')"
+BOLD="$(tput bold 2>/dev/null || true)"; RST="$(tput sgr0 2>/dev/null || true)"
+RED="$(tput setaf 1 2>/dev/null || printf '\033[31m')"
+YLW="$(tput setaf 3 2>/dev/null || printf '\033[33m')"
+GRN="$(tput setaf 2 2>/dev/null || printf '\033[32m')"
+CYN="$(tput setaf 6 2>/dev/null || printf '\033[36m')"
+
+logo() {
+  printf "%b" "${CYN}${BOLD}"
+  cat <<'ASCII'
+███████╗ ██████╗██╗  ██╗ ██████╗ 
+██╔════╝██╔════╝██║  ██║██╔═══██╗
+█████╗  ██║     ███████║██║   ██║
+██╔══╝  ██║     ██╔══██║██║   ██║
+███████╗╚██████╗██║  ██║╚██████╔╝
+╚══════╝ ╚═════╝╚═╝  ╚═╝ ╚═════╝ 
+ASCII
+  printf "%b\n" "$RST"
+}
+
+# colour by percentage
+perc_colour() { local p=$1; ((p<70)) && echo "$GRN" || { ((p<90)) && echo "$YLW" || echo "$RED"; }; }
+
+bar() {                      # bar current/max width
+  local cur=$1 max=$2 w=$3; ((max==0)) && max=1
+  local fill=$(( cur * w / max ))
+  printf '%b%*s%b%*s' "$(perc_colour $((cur*100/max)))" "$fill" '' "$RST" $((w-fill)) ''
+}
+
+# ─────────────────────────  CLI args  ───────────────────────────────────────
+WATCH=false; INTERVAL=5; JSON=false
+while [[ ${1:-} ]]; do
+  case $1 in
+    -w|--watch) WATCH=true ;;
+    -i|--interval) INTERVAL=${2:-5}; shift ;;
+    --json) JSON=true ;;
+    *) echo "Unknown option: $1" >&2; exit 1 ;;
+  esac; shift
+done
+
+# ─────────────────────────  Probes  ─────────────────────────────────────────
+service_up()   { docker inspect -f '{{.State.Running}}' "$1" &>/dev/null && echo true || echo false; }
+service_uptime(){ docker inspect -f '{{.State.StartedAt}}' "$1" 2>/dev/null | cut -d'.' -f1; }
+
+current_model() {
+  local js; js=$(curl -s --max-time 2 http://localhost:8000/v1/models || true)
+  [[ -n $js ]] && jq -r '.data[0].id' <<<"$js" 2>/dev/null || echo n/a
+}
+
+model_cfg() { grep -E -o -- '--(quantization|max-model-len)[[:space:]]+[^ ]+' /opt/shai/compose/docker-compose.yml 2>/dev/null | paste -sd ' ' -; }
+load_avg()  { awk '{printf "%.2f %.2f", $1, $2}' /proc/loadavg; }
+
+host_mem()  { awk '/MemAvailable/{a=$2}/MemTotal/{t=$2}END{print t-a,t}' /proc/meminfo; }
+
+gpu_stats() {
+  if command -v nvidia-smi &>/dev/null; then
+    nvidia-smi --query-gpu=utilization.gpu,memory.used,memory.total \
+      --format=csv,noheader,nounits 2>/dev/null || echo "0,0,0"
+  else echo "0,0,0"; fi
+}
+
+active_users() { find /opt/shai/openwebui/data/db -name '*sessions' 2>/dev/null | wc -l; }
+
+# Docker-Hub update checker (quietly fails offline)
+check_update() {           # image repo:tag   returns "latest/newer/same"
+  local ref=$1 img tag; img=${ref%:*}; tag=${ref#*:}
+  local latest
+  latest=$(docker manifest inspect "$img:latest" >/dev/null 2>&1 && echo latest || echo "")
+  [[ -z $latest ]] && { echo unknown; return; }
+  [[ $tag == latest ]] && echo same     || echo newer
+}
+
+# ─────────────────────────  JSON output  ────────────────────────────────────
+if $JSON; then
+  IFS=',' read -r gpu_util gpu_mem gpu_tot <<<"$(gpu_stats)"
+  read -r ram_used ram_tot <<<"$(host_mem)"
+  jq -n --arg vllm "$(service_up vllm-server)" \
+        --arg web  "$(service_up openwebui)" \
+        --arg model "$(current_model)" \
+        --arg cfg "$(model_cfg)" \
+        --arg gpuu "$gpu_util" --arg gmem "$gpu_mem" --arg gtot "$gpu_tot" \
+        --arg ramu "$ram_used" --arg rtot "$ram_tot" \
+        --arg sessions "$(active_users)" \
+        --arg uvllm "$(check_update vllm/vllm-openai:latest)" \
+        --arg uweb  "$(check_update ghcr.io/open-webui/open-webui:latest)" \
+        '{vllm:$vllm, webui:$web, model:$model, cfg:$cfg,
+          gpu:{util:$gpuu, used:$gmem, total:$gtot},
+          ram:{
