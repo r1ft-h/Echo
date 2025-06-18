@@ -1,21 +1,21 @@
 #!/usr/bin/env bash
 # -----------------------------------------------------------------------------
-# SHAI Stack – Ubuntu Server bootstrap script (bare-metal / VM)
+# Echo Stack – Ubuntu Server bootstrap script (bare-metal / VM)
 # -----------------------------------------------------------------------------
 # Target : Ubuntu Server 22.04 LTS with an NVIDIA GPU (PCIe or passthrough)
 # * Installs NVIDIA driver 550, Docker CE and the NVIDIA Container Toolkit
-# * Creates /opt/shai directory tree + logrotate
+# * Creates /opt/echo directory tree + logrotate
 # * Configures UFW (OpenSSH + OpenWebUI port)
-# * Syncs project files from /opt/shai-src
+# * Syncs project files from /opt/echo-src
 # * English-only, non-interactive, idempotent
 # -----------------------------------------------------------------------------
 set -euo pipefail
 export DEBIAN_FRONTEND=noninteractive
 
 # ───────────────────────── Variables ─────────────────────────────────────────
-SHAI_ROOT="/opt/shai"
-SHAI_SRC="/opt/shai-src"
-LOG_DIR="$SHAI_ROOT/logs"
+ECHO_ROOT="/opt/echo"
+ECHO_SRC="/opt/echo-src"
+LOG_DIR="$ECHO_ROOT/logs"
 SETUP_LOG="$LOG_DIR/setup.log"
 OPENWEBUI_PORT="8080"
 CALLING_USER="$(logname)"
@@ -82,13 +82,13 @@ if ! id -nG "$CALLING_USER" | grep -qw docker; then
   USER_NEEDS_RELOGIN=true
 fi
 
-# ────────────────── Create SHAI directory structure ──────────────────────────
-mkdir -p "$SHAI_ROOT"/bin "$SHAI_ROOT"/models "$SHAI_ROOT"/vllm \
-         "$SHAI_ROOT"/openwebui/data "$LOG_DIR"
-chown -R "$CALLING_USER:$CALLING_USER" "$SHAI_ROOT"
+# ────────────────── Create Echo directory structure ──────────────────────────
+mkdir -p "$ECHO_ROOT"/bin "$ECHO_ROOT"/models "$ECHO_ROOT"/vllm \
+         "$ECHO_ROOT"/openwebui/data "$LOG_DIR"
+chown -R "$CALLING_USER:$CALLING_USER" "$ECHO_ROOT"
 
 # ──────────────── Initialize logrotate configuration ─────────────────────────
-cat > /etc/logrotate.d/shai-logs <<EOF
+cat > /etc/logrotate.d/echo-logs <<EOF
 $LOG_DIR/*.log {
     weekly
     rotate 4
@@ -100,21 +100,21 @@ $LOG_DIR/*.log {
 }
 EOF
 
-# ───────────────────────── Sync SHAI project source ──────────────────────────
-echo "=== Syncing SHAI project files ==="
-if [[ -d "$SHAI_SRC" ]]; then
-  rsync -a --exclude='.git' "$SHAI_SRC"/ "$SHAI_ROOT"/
-  chown -R "$CALLING_USER:$CALLING_USER" "$SHAI_ROOT"
-  chmod +x "$SHAI_ROOT"/bin/*.sh || true
+# ───────────────────────── Sync Echo project source ──────────────────────────
+echo "=== Syncing Echo project files ==="
+if [[ -d "$ECHO_SRC" ]]; then
+  rsync -a --exclude='.git' "$ECHO_SRC"/ "$ECHO_ROOT"/
+  chown -R "$CALLING_USER:$CALLING_USER" "$ECHO_ROOT"
+  chmod +x "$ECHO_ROOT"/bin/*.sh || true
 else
-  echo "⚠️  $SHAI_SRC not found. Skipping rsync of project files." >&2
+  echo "⚠️  $ECHO_SRC not found. Skipping rsync of project files." >&2
 fi
 
 # ────────────────────────────── Logging ───────────────────────────────────────
 mkdir -p "$LOG_DIR"
 exec > >(tee -a "$SETUP_LOG") 2>&1
 
-echo "=== SHAI directory tree created at $SHAI_ROOT ==="
+echo "=== Echo directory tree created at $ECHO_ROOT ==="
 
 # ──────────────────────────── UFW rules ───────────────────────────────────────
 if ufw status | grep -q inactive; then

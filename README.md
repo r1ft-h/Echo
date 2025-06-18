@@ -7,9 +7,9 @@
 ╚══════╝ ╚═════╝╚═╝  ╚═╝ ╚═════╝ 
 ```
 
-# SHAI  —  Self‑Hosted AI Stack
+# Echo  —  Self‑Hosted AI Stack
 
-**SHAI** delivers a production‑ready, GPU‑accelerated inference stack combining:
+**Echo** delivers a production‑ready, GPU‑accelerated inference stack combining:
 
 * **vLLM** (OpenAI‑compatible API)
 * **OpenWebUI** (chat front‑end)
@@ -31,7 +31,7 @@ Designed for consulting firms specialising in **Identity & Access Management (IA
 ## Repo Layout
 
 ```
-SHAI/
+Echo/
 ├─ bin/                   # Shell helpers (add‑model, switch‑model, etc.)
 ├─ compose/               # Docker Compose files per target
 │  ├─ docker-compose.yml  # WSL flavour
@@ -42,12 +42,12 @@ SHAI/
 │  └─ k8s/                # Helm/Kustomize manifests (WIP)
 ├─ doc/
 │  ├─ quickstart-baremetal.md
-│  ├─ shai-operations-handbook.md
+│  ├─ operations-handbook.md
 │  └─ openwebui-admin-guide.md
 └─ models/                # (git‑ignored) local model cache
 ```
 
-> **Tip:** Model payloads live outside Git in `/opt/shai/models/` once deployed.
+> **Tip:** Model payloads live outside Git in `/opt/echo/models/` once deployed.
 
 ---
 
@@ -56,7 +56,7 @@ SHAI/
 | Document                            | Description                                                      |
 | ----------------------------------- | ---------------------------------------------------------------- |
 | **doc/quickstart-baremetal.md**     | End‑to‑end install on Ubuntu Server with NVIDIA GPU.             |
-| **doc/shai-operations-handbook.md** | Hardware sizing, lifecycle management, advanced troubleshooting. |
+| **doc/operations-handbook.md** | Hardware sizing, lifecycle management, advanced troubleshooting. |
 | **doc/openwebui-admin-guide.md**    | Branding, authentication, feature flags for the front‑end.       |
 
 For WSL 2 or Kubernetes, see the respective README inside each `deploy/` sub‑folder.
@@ -67,16 +67,16 @@ For WSL 2 or Kubernetes, see the respective README inside each `deploy/` sub‑
 
 ```bash
 # 1. Clone
-sudo git clone https://github.com/<your-org>/SHAI.git /opt/shai-src
+sudo git clone https://github.com/<your-org>/Echo.git /opt/echo-src
 
 # 2. Bootstrap system
-cd /opt/shai-src/deploy/ubuntu_server && sudo ./setup.sh
+cd /opt/echo-src/deploy/ubuntu_server && sudo ./setup.sh
 # Reboot if prompted, then re‑login
 
 # 3. Load a model
-/opt/shai/bin/add-model.sh mistral7b-awq \
+/opt/echo/bin/add-model.sh mistral7b-awq \
   TheBloke/Mistral-7B-Instruct-v0.2-AWQ --quant awq
-/opt/shai/bin/switch-model.sh mistral7b-awq
+/opt/echo/bin/switch-model.sh mistral7b-awq
 
 # 4. Chat away
 open http://<server-ip>:8080
@@ -90,4 +90,4 @@ PRs and issue reports are welcome. Please review `CONTRIBUTING.md` and open an i
 
 ---
 
-© 2025 SH.AI — MIT License (see `LICENSE`)
+© 2025 Echo — MIT License (see `LICENSE`)

@@ -8,10 +8,10 @@
 set -euo pipefail
 
 ALIAS="${1:-}"
-MODELS_DIR="/opt/shai/models"
+MODELS_DIR="/opt/echo/models"
 TARGET_DIR="$MODELS_DIR/$ALIAS"
-SYMLINK="/opt/shai/vllm/current_model"
-BIN_LOG="/opt/shai/logs/bin-actions.log"
+SYMLINK="/opt/echo/vllm/current_model"
+BIN_LOG="/opt/echo/logs/bin-actions.log"
 
 usage() {
   echo "Usage: $0 <alias>" >&2
@@ -29,7 +29,7 @@ log_action() {
 [[ ! -d "$TARGET_DIR" ]] && { echo "❌ Model alias '$ALIAS' does not exist." >&2; exit 1; }
 
 # Ensure required directories exist
-mkdir -p /opt/shai/vllm /opt/shai/logs
+mkdir -p /opt/echo/vllm /opt/echo/logs
 
 # Remove old symlink and create new one
 rm -f "$SYMLINK"

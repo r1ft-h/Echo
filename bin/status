@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # -----------------------------------------------------------------------------
-# status – SHAI stack health dashboard
+# status – Echo stack health dashboard
 # -----------------------------------------------------------------------------
 #  status                    → one-shot dashboard
 #  status --watch [-i N]     → full-screen auto-refresh every N s (default 5)
@@ -62,7 +62,7 @@ current_model() {
   [[ -n $js ]] && jq -r '.data[0].id' <<<"$js" 2>/dev/null || echo n/a
 }
 
-model_cfg() { grep -E -o -- '--(quantization|max-model-len)[[:space:]]+[^ ]+' /opt/shai/compose/docker-compose.yml 2>/dev/null | paste -sd ' ' -; }
+model_cfg() { grep -E -o -- '--(quantization|max-model-len)[[:space:]]+[^ ]+' /opt/echo/compose/docker-compose.yml 2>/dev/null | paste -sd ' ' -; }
 load_avg()  { awk '{printf "%.2f %.2f", $1, $2}' /proc/loadavg; }
 
 host_mem()  { awk '/MemAvailable/{a=$2}/MemTotal/{t=$2}END{print t-a,t}' /proc/meminfo; }
@@ -74,7 +74,7 @@ gpu_stats() {
   else echo "0,0,0"; fi
 }
 
-active_users() { find /opt/shai/openwebui/data/db -name '*sessions' 2>/dev/null | wc -l; }
+active_users() { find /opt/echo/openwebui/data/db -name '*sessions' 2>/dev/null | wc -l; }
 
 # Docker-Hub update checker (quietly fails offline)
 check_update() {           # image repo:tag   returns "latest/newer/same"

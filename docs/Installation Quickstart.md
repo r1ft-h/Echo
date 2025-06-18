@@ -1,6 +1,6 @@
-# SHAI Quick‑Start Guide — Bare‑Metal Deployment (Ubuntu 22.04 LTS)
+# Echo Quick‑Start Guide — Bare‑Metal Deployment (Ubuntu 22.04 LTS)
 
-> **Scope** This document walks a Linux administrator through a clean, repeatable installation of **SHAI** (vLLM + OpenWebUI) on a physical or virtual Ubuntu Server 22.04 host equipped with an NVIDIA GPU.
+> **Scope** This document walks a Linux administrator through a clean, repeatable installation of **Echo** (vLLM + OpenWebUI) on a physical or virtual Ubuntu Server 22.04 host equipped with an NVIDIA GPU.
 
 ---
 
@@ -19,7 +19,7 @@
 
 ## 2 High‑Level Workflow
 
-1. **Clone** the SHAI repository to `/opt/shai-src`.
+1. **Clone** the Echo repository to `/opt/echo-src`.
 2. **Execute** the bootstrap script (`setup.sh`).
 3. **Reboot / re‑login** if prompted (GPU driver & Docker group).
 4. **Add** an LLM with `add-model.sh`.
@@ -36,8 +36,8 @@ A fully functional stack is typically online in **≤ 15 min** on a 1 Gbps 
 
 ```bash
 sudo apt update && sudo apt install -y git
-sudo git clone https://github.com/<your-org>/SHAI.git /opt/shai-src
-cd /opt/shai-src/deploy/ubuntu_server
+sudo git clone https://github.com/<your-org>/Echo.git /opt/echo-src
+cd /opt/echo-src/deploy/ubuntu_server
 ```
 
 ### 3.2 Run the Bootstrap Script
@@ -49,7 +49,7 @@ sudo ./setup.sh
 The script:
 
 * Installs NVIDIA driver 550, Docker Engine & NVIDIA Container Toolkit.
-* Creates the directory tree **`/opt/shai`** and seeds it with project files from **`/opt/shai-src`**.
+* Creates the directory tree **`/opt/echo`** and seeds it with project files from **`/opt/echo-src`**.
 * Configures log rotation and UFW (OpenSSH + OpenWebUI port 8080).
 
 > **Reboot** when the script requests it. Log back in once the host is up.
@@ -65,7 +65,7 @@ You should see your GPU listed with the expected driver and CUDA versions.
 ### 3.4 Directory Layout (Post‑Install)
 
 ```
-/opt/shai
+/opt/echo
 ├── bin/                # operational scripts
 ├── compose/            # docker‑compose YAML files
 ├── models/             # downloaded LLMs (one sub‑dir per model)
@@ -79,7 +79,7 @@ You should see your GPU listed with the expected driver and CUDA versions.
 ### 3.5 Download a Model
 
 ```bash
-/opt/shai/bin/add-model.sh \
+/opt/echo/bin/add-model.sh \
   mistral7b-awq \
   TheBloke/Mistral-7B-Instruct-v0.2-AWQ \
   --quant awq
@@ -88,7 +88,7 @@ You should see your GPU listed with the expected driver and CUDA versions.
 ### 3.6 Activate the Model
 
 ```bash
-/opt/shai/bin/switch-model.sh mistral7b-awq
+/opt/echo/bin/switch-model.sh mistral7b-awq
 ```
 
 This refreshes the **`current_model`** symlink and restarts the `vllm-server` container.
@@ -96,7 +96,7 @@ This refreshes the **`current_model`** symlink and restarts the `vllm-server` co
 ### 3.7 Launch the Services (if not already running)
 
 ```bash
-cd /opt/shai/compose
+cd /opt/echo/compose
 docker compose up -d
 ```
 
@@ -107,7 +107,7 @@ docker compose up -d
 curl http://localhost:8000/v1/models | jq
 
 # Real‑time logs
-cd /opt/shai/compose
+cd /opt/echo/compose
 docker compose logs -f vllm-server
 ```
 
@@ -125,7 +125,7 @@ Open a browser to:
 http://<server‑ip>:8080
 ```
 
-> Authentication is disabled by default. Toggle `WEBUI_AUTH=true` in `/opt/shai/.env` to enable login.
+> Authentication is disabled by default. Toggle `WEBUI_AUTH=true` in `/opt/echo/.env` to enable login.
 
 ---
 
@@ -133,9 +133,9 @@ http://<server‑ip>:8080
 
 | Task                   | Command                                                                                                                       |      |         |
 | ---------------------- | ----------------------------------------------------------------------------------------------------------------------------- | ---- | ------- |
-| Stop / start the stack | `docker compose -f /opt/shai/compose/docker-compose.yml down && docker compose -f /opt/shai/compose/docker-compose.yml up -d` |      |         |
-| View vLLM logs         | `docker compose -f /opt/shai/compose/docker-compose.yml logs -f vllm-server`                                                  |      |         |
-| Update SHAI source     | `git -C /opt/shai-src pull` then rerun `setup.sh` (idempotent)                                                                |      |         |
+| Stop / start the stack | `docker compose -f /opt/echo/compose/docker-compose.yml down && docker compose -f /opt/echo/compose/docker-compose.yml up -d` |      |         |
+| View vLLM logs         | `docker compose -f /opt/echo/compose/docker-compose.yml logs -f vllm-server`                                                  |      |         |
+| Update Echo source     | `git -C /opt/echo-src pull` then rerun `setup.sh` (idempotent)                                                                |      |         |
 | Add a new model        | \`add-model.sh <alias> \<hf\_repo> --quant \<awq                                                                              | gptq | none>\` |
 | Switch active model    | `switch-model.sh <alias>`                                                                                                     |      |         |
 
@@ -144,10 +144,10 @@ http://<server‑ip>:8080
 ## 5 Next Steps
 
 * Fine‑tune `.env` (port numbers, OpenWebUI auth, model limits).
-* Schedule nightly `git pull` to track SHAI updates.
+* Schedule nightly `git pull` to track Echo updates.
 * Integrate an enterprise RAG pipeline (vector store + embeddings) when ready.
 
-> **Need Kubernetes?** A separate manifest lives under `/opt/shai-src/deploy/k8s/`.
+> **Need Kubernetes?** A separate manifest lives under `/opt/echo-src/deploy/k8s/`.
 
 ---
 
@@ -155,12 +155,12 @@ http://<server‑ip>:8080
 
 | Symptom                                                                                | Probable Cause                                                                | Resolution                                                                                                                                                                                                                                                                                  |
 | -------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **`curl: (56) Recv failure: Connection reset by peer`** when querying `localhost:8000` | The vLLM API did not bind to port 8000 or crashed after model load.           | • Run `docker compose -f /opt/shai/compose/docker-compose.yml logs -f vllm-server`.<br>• Ensure `--served-model-name` and `--max-model-len` are present in the compose file.<br>• Verify that the GPU has sufficient memory.<br>• If running under WSL 2, use the tested image tag `0.2.4`. |
+| **`curl: (56) Recv failure: Connection reset by peer`** when querying `localhost:8000` | The vLLM API did not bind to port 8000 or crashed after model load.           | • Run `docker compose -f /opt/echo/compose/docker-compose.yml logs -f vllm-server`.<br>• Ensure `--served-model-name` and `--max-model-len` are present in the compose file.<br>• Verify that the GPU has sufficient memory.<br>• If running under WSL 2, use the tested image tag `0.2.4`. |
 | **`ValueError: max seq len … larger than the maximum number of tokens…`**              | The selected model’s context window exceeds the KV‑cache capacity of the GPU. | Reduce `--max-model-len` (e.g. 2048 → 1024) or increase `gpu_memory_utilization` in the compose file.                                                                                                                                                                                       |
 | **`nvidia-smi` works on host but fails inside container**                              | NVIDIA Container Toolkit is not registered with Docker.                       | `sudo nvidia-ctk runtime configure --runtime=docker && sudo systemctl restart docker`                                                                                                                                                                                                       |
-| **`permission denied` on `/opt/shai/models`** after manual file deletion               | Folder ownership reverted to `root`.                                          | `sudo chown -R $USER:$USER /opt/shai/models`                                                                                                                                                                                                                                                |
+| **`permission denied` on `/opt/echo/models`** after manual file deletion               | Folder ownership reverted to `root`.                                          | `sudo chown -R $USER:$USER /opt/echo/models`                                                                                                                                                                                                                                                |
 | OpenWebUI not reachable on port 8080                                                   | UFW/firewall rule missing or incorrect.                                       | `sudo ufw allow 8080/tcp` and confirm status with `sudo ufw status numbered`.                                                                                                                                                                                                               |
 
 ---
 
-### © 2025 SH.AI — All rights reserved SH.AI — All rights reserved
+### © 2025 Echo — All rights reserved

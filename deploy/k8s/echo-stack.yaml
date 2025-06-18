@@ -1,13 +1,13 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: shai
+  name: echo
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: vllm-server
-  namespace: shai
+  namespace: echo
 spec:
   replicas: 1
   selector:
@@ -38,14 +38,14 @@ spec:
       volumes:
         - name: model
           hostPath:
-            path: /opt/shai/vllm/current_model
+            path: /opt/echo/vllm/current_model
             type: Directory
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: vllm-server
-  namespace: shai
+  namespace: echo
 spec:
   selector:
     app: vllm-server
@@ -57,7 +57,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: openwebui
-  namespace: shai
+  namespace: echo
 spec:
   replicas: 1
   selector:
@@ -82,14 +82,14 @@ spec:
       volumes:
         - name: data
           hostPath:
-            path: /opt/shai/openwebui/data
+            path: /opt/echo/openwebui/data
             type: Directory
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: openwebui
-  namespace: shai
+  namespace: echo
 spec:
   selector:
     app: openwebui

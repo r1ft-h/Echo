@@ -1,5 +1,5 @@
 # ──────────────────────────────────────────────
-# SHAI stack – Git ignore rules
+# Echo stack – Git ignore rules
 # This file keeps runtime artifacts and secrets
 # out of version control.
 # ──────────────────────────────────────────────
