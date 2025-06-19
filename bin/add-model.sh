@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # -----------------------------------------------------------------------------
-# add-model.sh – download a Hugging Face model into /opt/shai/models/<alias>
+# add-model.sh – download a Hugging Face model into /opt/echo/models/<alias>
 # -----------------------------------------------------------------------------
 # Usage:
 #   add-model.sh <alias> <hf_repo_id> [--quant awq|gptq|none]
@@ -14,10 +14,10 @@ ALIAS="${1:-}"
 REPO="${2:-}"
 QUANT_FLAG="${3:---quant none}"
 
-MODELS_DIR="/opt/shai/models"
+MODELS_DIR="/opt/echo/models"
 TARGET_DIR="$MODELS_DIR/$ALIAS"
-BIN_LOG="/opt/shai/logs/bin-actions.log"
-ENV_FILE="/opt/shai/.env"
+BIN_LOG="/opt/echo/logs/bin-actions.log"
+ENV_FILE="/opt/echo/.env"
 
 usage() {
   cat <<EOF
@@ -33,7 +33,7 @@ log()  { echo "$(ts) [user:$USER] [action:add-model] $1" >> "$BIN_LOG"; }
 [[ -z "$ALIAS" || -z "$REPO" ]] && usage
 
 # Ensure required directories exist
-mkdir -p /opt/shai/{models,vllm,logs,bin,openwebui/data}
+mkdir -p /opt/echo/{models,vllm,logs,bin,openwebui/data}
 [ -f "$ENV_FILE" ] || touch "$ENV_FILE"
 
 if [[ -d "$TARGET_DIR" ]]; then

@@ -1,20 +1,20 @@
 #!/usr/bin/env bash
 # -----------------------------------------------------------------------------
-# SHAI Stack – Kubernetes bootstrap script
+# Echo Stack – Kubernetes bootstrap script
 # -----------------------------------------------------------------------------
 # Target : Ubuntu Server 22.04 LTS with NVIDIA driver already installed
 # * Installs k3s (lightweight Kubernetes)
 # * Installs Helm package manager
-# * Creates /opt/shai directory tree + logrotate
-# * Syncs Kubernetes manifests from /opt/shai-src
+# * Creates /opt/echo directory tree + logrotate
+# * Syncs Kubernetes manifests from /opt/echo-src
 # * Non-interactive and idempotent
 # -----------------------------------------------------------------------------
 set -euo pipefail
 export DEBIAN_FRONTEND=noninteractive
 
-SHAI_ROOT="/opt/shai"
-SHAI_SRC="/opt/shai-src"
-LOG_DIR="$SHAI_ROOT/logs"
+ECHO_ROOT="/opt/echo"
+ECHO_SRC="/opt/echo-src"
+LOG_DIR="$ECHO_ROOT/logs"
 SETUP_LOG="$LOG_DIR/setup.log"
 CALLING_USER="$(logname)"
 
@@ -47,11 +47,11 @@ if ! command -v helm &>/dev/null; then
 fi
 
 # Directory structure
-mkdir -p "$SHAI_ROOT"/k8s "$LOG_DIR"
-chown -R "$CALLING_USER:$CALLING_USER" "$SHAI_ROOT"
+mkdir -p "$ECHO_ROOT"/k8s "$LOG_DIR"
+chown -R "$CALLING_USER:$CALLING_USER" "$ECHO_ROOT"
 
 # Logrotate config
-cat > /etc/logrotate.d/shai-logs <<EOF2
+cat > /etc/logrotate.d/echo-logs <<EOF2
 $LOG_DIR/*.log {
     weekly
     rotate 4
@@ -64,19 +64,19 @@ $LOG_DIR/*.log {
 EOF2
 
 # Sync project files if available
-echo "=== Syncing SHAI project files ==="
-if [[ -d "$SHAI_SRC" ]]; then
-  rsync -a --exclude='.git' "$SHAI_SRC"/deploy/k8s/ "$SHAI_ROOT"/k8s/
-  chown -R "$CALLING_USER:$CALLING_USER" "$SHAI_ROOT"
+echo "=== Syncing Echo project files ==="
+if [[ -d "$ECHO_SRC" ]]; then
+  rsync -a --exclude='.git' "$ECHO_SRC"/deploy/k8s/ "$ECHO_ROOT"/k8s/
+  chown -R "$CALLING_USER:$CALLING_USER" "$ECHO_ROOT"
 else
-  echo "⚠️  $SHAI_SRC not found. Skipping rsync of project files." >&2
+  echo "⚠️  $ECHO_SRC not found. Skipping rsync of project files." >&2
 fi
 
 # Initialize log
 mkdir -p "$LOG_DIR"
 exec > >(tee -a "$SETUP_LOG") 2>&1
 
-echo "=== SHAI Kubernetes setup completed ==="
+echo "=== Echo Kubernetes setup completed ==="
 if [[ ${NEEDS_REBOOT:-false} == true ]]; then
   echo "🔄  A reboot may be required to finalise k3s installation." >&2
 fi

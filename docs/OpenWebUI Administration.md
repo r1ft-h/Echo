@@ -1,6 +1,6 @@
-# OpenWebUI Administration & Customisation Guide (SHAI Edition)
+# OpenWebUI Administration & Customisation Guide (Echo Edition)
 
-> **Scope** This document explains how to operate, secure and customise the OpenWebUI front‑end shipped with SHAI. It targets platform administrators who already deployed the base stack.
+> **Scope** This document explains how to operate, secure and customise the OpenWebUI front‑end shipped with Echo. It targets platform administrators who already deployed the base stack.
 
 ---
 
@@ -10,7 +10,7 @@
 | ------------- | ------------------------------------ | ------------ | ---------------------------------------------------------------- |
 | **openwebui** | `ghcr.io/open-webui/open-webui:main` | `8080`       | Web front‑end exposing ChatGPT‑style UI and multi‑model routing. |
 
-The container is defined in `/opt/shai/compose/docker-compose.yml` and is network‑isolated on the `shai` bridge.
+The container is defined in `/opt/echo/compose/docker-compose.yml` and is network‑isolated on the `echo` bridge.
 
 ---
 
@@ -21,19 +21,19 @@ The container is defined in `/opt/shai/compose/docker-compose.yml` and is networ
 | `OPENAI_API_BASE_URL`      | `http://vllm-server:8000/v1` | Endpoint for OpenAI‑compatible backend (vLLM).                |
 | `WEBUI_AUTH`               | `false`                      | When `true`, enables account‑based login (SQLite user store). |
 | `WEBUI_THEME`              | `light`                      | Can be `light`, `dark`, `auto`.                               |
-| `WEBUI_TITLE`              | `SHAI Chat`                  | Browser title & header branding.                              |
+| `WEBUI_TITLE`              | `Echo Chat`                  | Browser title & header branding.                              |
 | `WEBUI_MAX_TOKENS`         | `1024`                       | Hard cap exposed in UI drop‑down.                             |
 | `WEBUI_RATE_LIMIT_PER_MIN` | `0` (disabled)               | Max requests per user/min (0 = unlimited).                    |
 
-Edit `/opt/shai/.env`, then run `docker compose up -d` to apply.
+Edit `/opt/echo/.env`, then run `docker compose up -d` to apply.
 
 ---
 
 ## 3 Branding & Theme Customisation
 
-1. **Logo:** Mount a PNG into `/opt/shai/openwebui/data/static/logo.png`.
-2. **Favicon:** Replace `/opt/shai/openwebui/data/static/favicon.ico`.
-3. **Colours:** Create `/opt/shai/openwebui/data/custom.css` and override CSS vars:
+1. **Logo:** Mount a PNG into `/opt/echo/openwebui/data/static/logo.png`.
+2. **Favicon:** Replace `/opt/echo/openwebui/data/static/favicon.ico`.
+3. **Colours:** Create `/opt/echo/openwebui/data/custom.css` and override CSS vars:
 
    ```css
    :root {
@@ -51,7 +51,7 @@ When `WEBUI_AUTH=true`, OpenWebUI stores users in `data/database.sqlite`.
 ### 4.1 Create First Admin User
 
 ```bash
-docker compose -f /opt/shai/compose/docker-compose.yml exec openwebui \
+docker compose -f /opt/echo/compose/docker-compose.yml exec openwebui \
   bash -c "python manage.py create-admin --username admin --password 'S3cureP@ss!'"
 ```
 
@@ -84,7 +84,7 @@ Toggle in `.env` or via the admin panel (persists in DB).
 ## 6 Updating OpenWebUI
 
 ```bash
-cd /opt/shai/compose
+cd /opt/echo/compose
 docker compose pull openwebui
 docker compose up -d openwebui
 ```
@@ -104,4 +104,4 @@ Always read the release notes; breaking changes occasionally require DB migratio
 
 ---
 
-### © 2025 SH.AI — Internal Use Only
+### © 2025 Echo — Internal Use Only

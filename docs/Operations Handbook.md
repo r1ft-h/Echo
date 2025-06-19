@@ -1,6 +1,6 @@
-# SHAI Operations Handbook
+# Echo Operations Handbook
 
-> **Audience** Infrastructure & DevOps engineers responsible for day‑to‑day operation, scaling and maintenance of a self‑hosted SHAI stack.
+> **Audience** Infrastructure & DevOps engineers responsible for day‑to‑day operation, scaling and maintenance of a self‑hosted Echo stack.
 
 ---
 
@@ -22,7 +22,7 @@
 ### 2.1  Updating Containers
 
 ```bash
-cd /opt/shai/compose
+cd /opt/echo/compose
 # Pull newer tags defined in docker‑compose.yml
 docker compose pull
 # Recreate with zero downtime
@@ -31,12 +31,12 @@ docker compose up -d --remove-orphans
 
 *Never* use `latest` tags in production; pin to a tested version (e.g. `vllm-openai:0.3.2.post1`).
 
-### 2.2  Updating SHAI Scripts & Docs
+### 2.2  Updating Echo Scripts & Docs
 
 ```bash
-cd /opt/shai-src
+cd /opt/echo-src
 git pull
-sudo rsync -a --exclude='.git' /opt/shai-src/ /opt/shai/
+sudo rsync -a --exclude='.git' /opt/echo-src/ /opt/echo/
 # restart if bin/ or compose/ changed
 ```
 
@@ -44,7 +44,7 @@ sudo rsync -a --exclude='.git' /opt/shai-src/ /opt/shai/
 
 * **Bare‑metal:** install `nvidia-driver-550` from the graphics‑drivers PPA.<br>- **WSL 2:** keep Windows GPU driver ≥ 560.xx to match CUDA 12.6.
 
-Check compatibility matrix in `/opt/shai/doc/cuda_matrix.md` before upgrading.
+Check compatibility matrix in `/opt/echo/doc/cuda_matrix.md` before upgrading.
 
 ---
 
@@ -56,7 +56,7 @@ Check compatibility matrix in `/opt/shai/doc/cuda_matrix.md` before upgrading.
 | **Slow throughput**    | `docker stats` shows CPU > 300 %                | Add `--tensor-parallel-size 2` on dual‑GPU or enable speculative decoding.                       |
 | **OOM during compile** | `CUDA out of memory while capturing cudagraphs` | Add `--enforce-eager` flag or reduce `gpu_memory_utilization`.                                   |
 | **Tokenizer stall**    | vLLM log stuck at `Initializing tokenizer pool` | Set `TOKENIZER_POOL_SIZE=0` (fallback to single‑thread).                                         |
-| **Healthcheck fail**   | API `/v1/models` returns 500                    | Check model path, verify symlink `/opt/shai/vllm/current_model` and run `switch-model.sh` again. |
+| **Healthcheck fail**   | API `/v1/models` returns 500                    | Check model path, verify symlink `/opt/echo/vllm/current_model` and run `switch-model.sh` again. |
 
 ---
 
@@ -64,9 +64,9 @@ Check compatibility matrix in `/opt/shai/doc/cuda_matrix.md` before upgrading.
 
 | Component        | Backup Target                   | Strategy                                |
 | ---------------- | ------------------------------- | --------------------------------------- |
-| LLM Models       | `/opt/shai/models/`             | Snapshots or `rsync` to object storage. |
-| User Data        | `/opt/shai/openwebui/data/`     | Nightly `tar.gz` → off‑site.            |
-| Config & Scripts | `/opt/shai/` (excluding models) | Git‑mirror to private repo.             |
+| LLM Models       | `/opt/echo/models/`             | Snapshots or `rsync` to object storage. |
+| User Data        | `/opt/echo/openwebui/data/`     | Nightly `tar.gz` → off‑site.            |
+| Config & Scripts | `/opt/echo/` (excluding models) | Git‑mirror to private repo.             |
 
 > \*\*Note \*\*Models can be re‑downloaded but may be gated; keep local copies for air‑gapped recovery.
 
@@ -87,8 +87,8 @@ Check compatibility matrix in `/opt/shai/doc/cuda_matrix.md` before upgrading.
 
 * **Primary Ops:** ops@prizm-security.com<br>- **Vendor Support:** NVIDIA Enterprise, OpenWebUI community.
 
-> For critical production incidents, escalate to the SHAI on‑call Mattermost channel `#shai-ops`.
+> For critical production incidents, escalate to the Echo on‑call Mattermost channel `#echo-ops`.
 
 ---
 
-© 2025 SH.AI — Internal Use Only
+© 2025 Echo — Internal Use Only

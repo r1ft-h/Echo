@@ -1,5 +1,5 @@
 # -----------------------------------------------------------------------------
-# SHAI stack – Makefile helpers
+# Echo stack – Makefile helpers
 # -----------------------------------------------------------------------------
 # All targets assume you run them from the repo root.
 # They wrap docker‑compose commands located in ./compose
@@ -12,7 +12,7 @@ COMPOSE        = docker compose --project-directory $(CURDIR)/compose
         shell-vllm shell-ui prune
 
 help: ## Display available targets
-	@echo "SHAI stack — common shortcuts"
+	@echo "Echo stack — common shortcuts"
 	@echo " make up            : Pull images and start stack"
 	@echo " make down          : Stop stack and remove containers"
 	@echo " make restart       : Restart all services"

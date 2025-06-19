@@ -20,7 +20,7 @@ services:
       --served-model-name mistral7b-awq
       --host 0.0.0.0
 
-    networks: [shai]
+    networks: [echo]
 
   openwebui:
     image: ghcr.io/open-webui/open-webui:main
@@ -39,8 +39,8 @@ services:
     volumes:
       - ../openwebui/data:/app/backend/data
 
-    networks: [shai]
+    networks: [echo]
 
 networks:
-  shai:
+  echo:
     driver: bridge

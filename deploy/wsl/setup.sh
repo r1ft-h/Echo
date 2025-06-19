@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
 # -----------------------------------------------------------------------------
-# SHAI Stack – WSL 2 bootstrap script (mise à jour)
+# Echo Stack – WSL 2 bootstrap script (mise à jour)
 # ----------------------------------------------------------------------------
-# Installe Docker + NVIDIA Toolkit (WSL2), configure /opt/shai proprement
+# Installe Docker + NVIDIA Toolkit (WSL2), configure /opt/echo proprement
 # ----------------------------------------------------------------------------
 set -euo pipefail
 export DEBIAN_FRONTEND=noninteractive
 
 # Variables principales
-SHAI_ROOT="/opt/shai"
-LOG_DIR="$SHAI_ROOT/logs"
+ECHO_ROOT="/opt/echo"
+LOG_DIR="$ECHO_ROOT/logs"
 SETUP_LOG="$LOG_DIR/setup.log"
 CALLING_USER="$(logname)"
 
@@ -70,12 +70,12 @@ if ! id -nG "$CALLING_USER" | grep -qw docker; then
   echo "ℹ️  L'utilisateur '$CALLING_USER' a été ajouté au groupe docker. Reconnecte ta session." >&2
 fi
 
-# Création de l'arborescence SHAI
-mkdir -p "$SHAI_ROOT"/{bin,models,vllm,openwebui/data,logs}
-chown -R "$CALLING_USER:$CALLING_USER" "$SHAI_ROOT"
+# Création de l'arborescence Echo
+mkdir -p "$ECHO_ROOT"/{bin,models,vllm,openwebui/data,logs}
+chown -R "$CALLING_USER:$CALLING_USER" "$ECHO_ROOT"
 
 # logrotate
-cat > /etc/logrotate.d/shai-logs <<EOF
+cat > /etc/logrotate.d/echo-logs <<EOF
 $LOG_DIR/*.log {
     weekly
     rotate 4
@@ -88,13 +88,13 @@ $LOG_DIR/*.log {
 EOF
 
 # Création du fichier .env si absent
-touch "$SHAI_ROOT/.env"
-chown "$CALLING_USER:$CALLING_USER" "$SHAI_ROOT/.env"
+touch "$ECHO_ROOT/.env"
+chown "$CALLING_USER:$CALLING_USER" "$ECHO_ROOT/.env"
 
 # Initialisation du log
 mkdir -p "$LOG_DIR"
 echo "=== Setup log ===" > "$SETUP_LOG"
-echo "$(date -u) – SHAI WSL2 setup completed" >> "$SETUP_LOG"
+echo "$(date -u) – Echo WSL2 setup completed" >> "$SETUP_LOG"
 
 # NVIDIA test via conteneur Docker
 echo "=== Test NVIDIA via Docker ==="
